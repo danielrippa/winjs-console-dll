@@ -1,0 +1,7 @@
+library WinjsConsole;
+
+uses ChakraConsole;
+
+exports GetJsValue;
+
+end.
