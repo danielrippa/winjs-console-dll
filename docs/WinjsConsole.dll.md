@@ -23,15 +23,17 @@
 
     input:
 
-      is-quick-edit-mode-enabled: ->
-      set-quick-edit-mode: ->
+      is-quick-edit-mode-enabled: (handle: number) -> boolean
+      set-quick-edit-mode: (handle: number, mode: boolean) -> void
 
-      get-input-event-type: -> string
+      get-input-event-type: (handle: number) -> string
       discard-input-event: -> void
 
       get-window-focus-event: -> 
 
-        void | focused: boolean
+        void | 
+        
+          focused: boolean
 
       get-window-resize-event: ->
 
