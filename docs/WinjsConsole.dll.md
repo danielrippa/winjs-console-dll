@@ -124,6 +124,13 @@
       activate-screen-buffer: (handle: number) -> void
       close-screen-buffer: (handle: number) -> void
 
+      get-size: (handle: number) -> 
+        
+        height: number
+        width: number
+  
+      set-size: (handle: number, height: number, width: number)  -> void
+  
       get-stdout-handle: -> number
 
       get-cursor-location: (handle: number) -> 
@@ -141,6 +148,15 @@
 
       is-virtual-terminal-processing-enabled: (handle: number) -> boolean
       set-virtual-termina-processing-state: (handle: number, state: boolean) -> void
+      
+      is-new-line-auto-return-enabled: (handle: number) -> boolean
+      set-new-line-auto-return-state: (handle: number, state: boolean) -> void
+      
+      is-processed-output-enabled: (handle: number) -> boolean
+      set-processed-output-state: (handle: number, state: boolean) -> void
+      
+      is-wrap-at-eol-enabled: (handle: number) -> boolean
+      set-wrap-at-eol-state: (handle: number, state: boolean) -> void
 
       are-extended-attributes-enabled: (handle: number) -> boolean
       set-extended-attributes-state: (handle: number, state: boolean) -> void
@@ -153,6 +169,15 @@
 
       get-font-face: (handle: number) -> string
       set-font-face: (handle: number, font-face: string) -> void
+      
+      get-font-weight: (handle: number) -> number
+      set-font-weight: (handle: number, font-weight: number) -> void
+
+      get-font-height: (handle: number) -> number
+      set-font-height: (handle: number, font-height: number) -> void
+
+      get-font-width: (handle: number) -> number
+      set-font-width: (handle: number, font-width: number) ->
 
       get-area-attributes: (handle: number, top: number, left: number, height: number, width: number) -> [ number ]
       set-area-attributes: (handle: number, top: number, left: number, height: number, width: number, attributes: [ number ]) -> void
