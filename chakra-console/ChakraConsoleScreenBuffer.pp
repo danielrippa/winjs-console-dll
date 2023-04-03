@@ -290,6 +290,7 @@ implementation
     Buffer.FontFace := JsStringAsString(Args^);
   end;
 
+
   function GetFontWeight(Args: PJsValue; ArgCount: Word): TJsValue;
   begin
     SetBuffer(Args);
@@ -302,6 +303,20 @@ implementation
 
     CheckParams('setFontWeight', Args, ArgCount, [jsNumber, jsNumber], 2); Inc(Args);
     Buffer.FontWeight := JsNumberAsInt(Args^);
+  end;
+
+  function GetFontHeight(Args: PJsValue; ArgCount: Word): TJsValue;
+  begin
+    SetBuffer(Args);
+    Result := IntAsJsNumber(Buffer.FontHeight);
+  end;
+
+  function SetFontHeight(Args: PJsValue; ArgCount: Word): TJsValue;
+  begin
+    SetBuffer(Args);
+
+    CheckParams('setFontHeight', Args, ArgCount, [jsNumber, jsNumber], 2); Inc(Args);
+    Buffer.FontHeight := JsNumberAsInt(Args^);
   end;
 
   function GetFontWidth(Args: PJsValue; ArgCount: Word): TJsValue;
@@ -596,6 +611,8 @@ implementation
     SetFunction(Result, 'setFontFace', SetFontFace);
     SetFunction(Result, 'getFontWeight', GetFontWeight);
     SetFunction(Result, 'setFontWeight', SetFontWeight);
+    SetFunction(Result, 'getFontHeight', GetFontHeight);
+    SetFunction(Result, 'setFontHeight', SetFontHeight);
     SetFunction(Result, 'getFontWidth', GetFontWidth);
     SetFunction(Result, 'setFontWidth', SetFontWidth);
 
