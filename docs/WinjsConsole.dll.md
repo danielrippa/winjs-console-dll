@@ -187,6 +187,8 @@
 
       set-area-attributes-value: (handle: number, top: number, left: number, height: number, width: number, attribute-value: number, length: number) -> void
       set-area-character: (handle: number, top: number, left: number, height: number, width: number, character: string, length: number) -> void
+      
+      scroll-area: (handle: number,  top: number, left: number, height: number, width: number, location-row: number, location-column: number, fill-character: string, fill-text-attributes: number) -> void
 
       write: (handle: number, value: string) -> void
 
