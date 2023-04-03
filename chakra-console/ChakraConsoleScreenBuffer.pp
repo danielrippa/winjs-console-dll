@@ -43,6 +43,42 @@ implementation
     Buffer.Close;
   end;
 
+  function GetSize(Args: PJsValue; ArgCount: Word): TJsValue;
+  begin
+    SetBuffer(Args);
+    Result := CreateObject;
+
+    with Buffer.Size do begin
+      SetProperty(Result, 'height', IntAsJsNumber(Height));
+      SetProperty(Result, 'width', IntAsJsNumber(Width));
+    end;
+  end;
+
+  function SetSize(Args: PJsValue; ArgCount: Word): TJsValue;
+  var
+    aSize: TScreenAreaSize;
+  begin
+    Result := Undefined;
+
+    SetBuffer(Args);
+    CheckParams('setSize', Args, ArgCount, [jsNumber, jsNumber, jsNumber], 3); Inc(Args);
+
+    with aSize do begin
+      Height := JsNumberAsInt(Args^); Inc(Args);
+      Width := JsNumberAsInt(Args^);
+    end;
+
+    Buffer.Size := aSize;
+  end;
+
+  function GetVisibleArea(Args: PJsValue; ArgCount: Word): TJsValue;
+  begin
+  end;
+
+  function SetVisibleArea(Args: PJsValue; ArgCount: Word): TJsValue;
+  begin
+  end;
+
   function GetStdoutHandle: TJsValue;
   begin
     Result := IntAsJsNumber(GetStdHandle(STD_OUTPUT_HANDLE));
@@ -125,6 +161,53 @@ implementation
     Buffer.VirtualTerminalProcessingEnabled := JsBooleanAsBoolean(Args^);
   end;
 
+  function IsNewLineAutoReturnEnabled(Args: PJsValue; ArgCount: Word): TJsValue;
+  begin
+    SetBuffer(Args);
+    Result := BooleanAsJsBoolean(Buffer.NewLineAutoReturnEnabled);
+  end;
+
+  function SetNewLineAutoReturnState(Args: PJsValue; ArgCount: Word): TJsValue;
+  begin
+    Result := Undefined;
+
+    SetBuffer(Args);
+
+    CheckParams('setNewLineAutoReturnState', Args, ArgCount, [jsNumber, jsBoolean], 2); Inc(Args);
+    Buffer.NewLineAutoReturnEnabled := JsBooleanAsBoolean(Args^);
+  end;
+
+  function IsProcessedOutputEnabled(Args: PJsValue; ArgCount: Word): TJsValue;
+  begin
+    SetBuffer(Args);
+
+    Result := BooleanAsJsBoolean(Buffer.NewLineAutoReturnEnabled);
+  end;
+
+  function SetProcessedOutputState(Args: PJsValue; ArgCount: Word): TJsValue;
+  begin
+    Result := Undefined;
+
+    SetBuffer(Args);
+
+    CheckParams('setProcessedOutputState', Args, ArgCount, [jsNumber, jsBoolean], 2);
+    Buffer.NewLineAutoReturnEnabled := JsBooleanAsBoolean(Args^);
+  end;
+
+  function IsWrapAtEolEnabled(Args: PJsValue; ArgCount: Word): TJsValue;
+  begin
+    SetBuffer(Args);
+    Result := BooleanAsJsBoolean(Buffer.WrapAtEolOutputEnabled);
+  end;
+
+  function SetWrapAtEolState(Args: PJsValue; ArgCount: Word): TJsValue;
+  begin
+    Result := Undefined;
+    SetBuffer(Args);
+
+    CheckParams('setWrapAtEolState', Args, ArgCount, [jsNumber, jsBoolean], 2); Inc(Args);
+    Buffer.WrapAtEolOutputEnabled := JsBooleanAsBoolean(Args^);
+  end;
 
   function AreExtendedAttributesEnabled(Args: PJsValue; ArgCount: Word): TJsValue;
   begin
@@ -205,6 +288,34 @@ implementation
     CheckParams('setFontFace', Args, ArgCount, [jsNumber, jsString], 2); Inc(Args);
 
     Buffer.FontFace := JsStringAsString(Args^);
+  end;
+
+  function GetFontWeight(Args: PJsValue; ArgCount: Word): TJsValue;
+  begin
+    SetBuffer(Args);
+    Result := IntAsJsNumber(Buffer.FontWeight);
+  end;
+
+  function SetFontWeight(Args: PJsValue; ArgCount: Word): TJsValue;
+  begin
+    SetBuffer(Args);
+
+    CheckParams('setFontWeight', Args, ArgCount, [jsNumber, jsNumber], 2); Inc(Args);
+    Buffer.FontWeight := JsNumberAsInt(Args^);
+  end;
+
+  function GetFontWidth(Args: PJsValue; ArgCount: Word): TJsValue;
+  begin
+    SetBuffer(Args);
+    Result := IntAsJsNumber(Buffer.FontWidth);
+  end;
+
+  function SetFontWidth(Args: PJsValue; ArgCount: Word): TJsValue;
+  begin
+    SetBuffer(Args);
+
+    CheckParams('setFontWeight', Args, ArgCount, [jsNumber, jsNumber], 2); Inc(Args);
+    Buffer.FontWidth := JsNumberAsInt(Args^);
   end;
 
   function WriteBuffer(Args: PJsValue; ArgCount: Word): TJsValue;
@@ -410,6 +521,33 @@ implementation
     Buffer.SetAreaCharacters(BufferArea, Characters);
   end;
 
+  function ScrollArea(Args: PJsValue; ArgCount: Word): TJsValue;
+  var
+    aLocation: TScreenCellLocation;
+    aCharacter: Array [0..1] of WideChar;
+    aFill: TScreenCell;
+  begin
+    Result := Undefined;
+    SetBuffer(Args);
+
+    CheckParams('scrollArea', Args, ArgCount, [jsNumber, jsNumber, jsNumber, jsNumber, jsNumber, jsNumber, jsNumber, jsString, jsNumber], 9); Inc(Args);
+    SetBufferArea(Args);
+
+    with aLocation do begin
+      Row := JsNumberAsInt(Args^); Inc(Args);
+      Column := JsNumberAsInt(Args^); Inc(Args);
+    end;
+
+    StringToWideChar(JsStringAsString(Args^), aCharacter, 1); Inc(Args);
+
+    with aFill do begin
+      Character := aCharacter[0];
+      CellAttributes := JsNumberAsInt(Args^);
+    end;
+
+    Buffer.ScrollArea(BufferArea, aLocation, aFill);
+  end;
+
   function GetChakraConsoleScreenBuffer;
   begin
     Result := CreateObject;
@@ -418,39 +556,60 @@ implementation
     SetFunction(Result, 'activateScreenBuffer', @ActivateScreenBuffer);
     SetFunction(Result, 'closeScreenBuffer', @CloseScreenBuffer);
 
+    SetFunction(Result, 'getSize', GetSize);
+    SetFunction(Result, 'setSize', SetSize);
+
+    SetFunction(Result, 'getVisibleArea', GetVisibleArea);
+    SetFunction(Result, 'setVisibleArea', SetVisibleArea);
+
     SetFunction(Result, 'getStdoutHandle', @GetStdoutHandle);
 
-    SetFunction(Result, 'getCursorLocation', @GetCursorLocation);
-    SetFunction(Result, 'setCursorLocation', @SetCursorLocation);
-    SetFunction(Result, 'getCursorVisibility', @GetCursorVisibility);
-    SetFunction(Result, 'setCursorVisibility', @SetCursorVisibility);
-    SetFunction(Result, 'getCursorSize', @GetCursorSize);
-    SetFunction(Result, 'setCursorSize', @SetCursorSize);
+    SetFunction(Result, 'getCursorLocation', GetCursorLocation);
+    SetFunction(Result, 'setCursorLocation', SetCursorLocation);
+    SetFunction(Result, 'getCursorVisibility', GetCursorVisibility);
+    SetFunction(Result, 'setCursorVisibility', SetCursorVisibility);
+    SetFunction(Result, 'getCursorSize', GetCursorSize);
+    SetFunction(Result, 'setCursorSize', SetCursorSize);
 
-    SetFunction(Result, 'isVirtualTerminalProcessingEnabled', @IsVirtualTerminalProcessingEnabled);
-    SetFunction(Result, 'setVirtualTerminalProcessingState', @SetVirtualTerminalProcessingState);
+    SetFunction(Result, 'isVirtualTerminalProcessingEnabled', IsVirtualTerminalProcessingEnabled);
+    SetFunction(Result, 'setVirtualTerminalProcessingState', SetVirtualTerminalProcessingState);
 
-    SetFunction(Result, 'areExtendedAttributesEnabled', @AreExtendedAttributesEnabled);
-    SetFunction(Result, 'setExtendedAttributesState', @SetExtendedAttributesState);
+    SetFunction(Result, 'isNewLineAutoReturnEnabled', IsNewLineAutoReturnEnabled);
+    SetFunction(Result, 'setNewLineAutoReturnState', SetNewLineAutoReturnState);
 
-    SetFunction(Result, 'getTextAttributesValue', @GetTextAttributesValue);
-    SetFunction(Result, 'setTextAttributesValue', @SetTextAttributesValue);
+    SetFunction(Result, 'isProcessedOutputEnabled', IsProcessedOutputEnabled);
+    SetFunction(Result, 'setProcessedOutputState', SetProcessedOutputState);
 
-    SetFunction(Result, 'getPaletteColor', @GetPaletteColor);
-    SetFunction(Result, 'setPaletteColor', @SetPaletteColor);
+    SetFunction(Result, 'isWrapAtEolEnabled', IsWrapAtEolEnabled);
+    SetFunction(Result, 'setWrapAtEolState', SetWrapAtEolState);
 
-    SetFunction(Result, 'getFontFace', @GetFontFace);
-    SetFunction(Result, 'setFontFace', @SetFontFace);
+    SetFunction(Result, 'areExtendedAttributesEnabled', AreExtendedAttributesEnabled);
+    SetFunction(Result, 'setExtendedAttributesState', SetExtendedAttributesState);
 
-    SetFunction(Result, 'getAreaAttributes', @GetAreaAttributes);
-    SetFunction(Result, 'setAreaAttributes', @SetAreaAttributes);
-    SetFunction(Result, 'getAreaCharacters', @GetAreaCharacters);
-    SetFunction(Result, 'setAreaCharacters', @SetAreaCharacters);
+    SetFunction(Result, 'getTextAttributesValue', GetTextAttributesValue);
+    SetFunction(Result, 'setTextAttributesValue', SetTextAttributesValue);
 
-    SetFunction(Result, 'setAreaAttributesValue', @SetAreaAttributesValue);
-    SetFunction(Result, 'setAreaCharacter', @SetAreaCharacter);
+    SetFunction(Result, 'getPaletteColor', GetPaletteColor);
+    SetFunction(Result, 'setPaletteColor', SetPaletteColor);
 
-    SetFunction(Result, 'write', @WriteBuffer);
+    SetFunction(Result, 'getFontFace', GetFontFace);
+    SetFunction(Result, 'setFontFace', SetFontFace);
+    SetFunction(Result, 'getFontWeight', GetFontWeight);
+    SetFunction(Result, 'setFontWeight', SetFontWeight);
+    SetFunction(Result, 'getFontWidth', GetFontWidth);
+    SetFunction(Result, 'setFontWidth', SetFontWidth);
+
+    SetFunction(Result, 'getAreaAttributes', GetAreaAttributes);
+    SetFunction(Result, 'setAreaAttributes', SetAreaAttributes);
+    SetFunction(Result, 'getAreaCharacters', GetAreaCharacters);
+    SetFunction(Result, 'setAreaCharacters', SetAreaCharacters);
+
+    SetFunction(Result, 'setAreaAttributesValue', SetAreaAttributesValue);
+    SetFunction(Result, 'setAreaCharacter', SetAreaCharacter);
+
+    SetFunction(Result, 'scrollArea', ScrollArea);
+
+    SetFunction(Result, 'write', WriteBuffer);
   end;
 
 end.
