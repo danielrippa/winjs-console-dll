@@ -48,6 +48,7 @@
 
           scan-code: number
           key-code: number
+          character: string
           key-type: string
           repetitions: number
 
@@ -57,6 +58,7 @@
 
           scan-code: number
           key-code: number
+          character: string
 
       get-mouse-moved-event: ->
 
