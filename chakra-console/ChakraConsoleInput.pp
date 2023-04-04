@@ -132,6 +132,7 @@ implementation
           with KeyPressedEvent do begin
             SetProperty(Result, 'scanCode', IntAsJsNumber(ScanCode));
             SetProperty(Result, 'keyCode', IntAsJsNumber(KeyCode));
+            SetProperty(Result, 'character', StringAsJsString(UnicodeChar));
             SetProperty(Result, 'keyType', StringAsJsString(GetKeyType(KeyCode)));
             SetProperty(Result, 'repetitions', IntAsJsNUmber(Repetitions));
           end;
@@ -154,6 +155,7 @@ implementation
           with KeyReleasedEvent do begin
             SetProperty(Result, 'scanCode', IntAsJsNumber(ScanCode));
             SetProperty(Result, 'keyCode', IntAsJsNumber(KeyCode));
+            SetProperty(Result, 'character', StringAsJsString(UnicodeChar));
           end;
 
         end;
