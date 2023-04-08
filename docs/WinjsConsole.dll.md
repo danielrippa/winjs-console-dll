@@ -60,6 +60,7 @@
           scan-code: number
           key-code: number
           character: string
+          name: string
 
       get-mouse-moved-event: ->
 
