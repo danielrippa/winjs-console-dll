@@ -12,7 +12,7 @@ interface
 implementation
 
   uses
-    Chakra, ChakraUtils, WinconConsoleInput;
+    Chakra, ChakraUtils, WinconConsoleInput, ChakraConsoleUtils;
 
   function GetInputEventType: TJsValue;
   var
@@ -135,6 +135,7 @@ implementation
             SetProperty(Result, 'character', StringAsJsString(UnicodeChar));
             SetProperty(Result, 'keyType', StringAsJsString(GetKeyType(KeyCode)));
             SetProperty(Result, 'repetitions', IntAsJsNUmber(Repetitions));
+            SetProperty(Result, 'name', StringAsJsString(GetKeyName(KeyCode)));
           end;
 
         end;
