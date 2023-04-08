@@ -157,6 +157,7 @@ implementation
             SetProperty(Result, 'scanCode', IntAsJsNumber(ScanCode));
             SetProperty(Result, 'keyCode', IntAsJsNumber(KeyCode));
             SetProperty(Result, 'character', StringAsJsString(UnicodeChar));
+            SetProperty(Result, 'name', StringAsJsString(GetKeyName(KeyCode)));
           end;
 
         end;
