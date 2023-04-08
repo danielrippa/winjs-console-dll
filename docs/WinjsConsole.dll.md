@@ -49,6 +49,7 @@
           scan-code: number
           key-code: number
           character: string
+          name: string
           key-type: string
           repetitions: number
 
