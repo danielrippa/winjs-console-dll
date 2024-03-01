@@ -4,18 +4,19 @@ unit Chakra;
 
 interface
 
-  uses ChakraTypes;
+  uses
+    ChakraTypes;
 
   function GetGlobalObject: TJsValue;
 
-  function CreateExternalArrayBuffer(Value: WideString): TJsValue;
-  function EvalScriptSource(SourceContext: UIntPtr; ScriptSource, ScriptName: WideString): TJsValue;
-
   function GetProperty(Instance: TJsValue; PropertyName: WideString): TJsValue;
+
   function GetStringProperty(Instance: TJsValue; PropertyName: WideString): WideString;
   function GetIntProperty(Instance: TJsValue; PropertyName: WideString): Integer;
 
   procedure SetProperty(Instance: TJsValue; PropertyName: WideString; Value: TJsValue);
+
+  procedure SetFunction(Instance: TJsValue; FunctionName: WideString; Callback: TJsFunctionFunc);
 
   function JsValueAsJsString(Value: TJsValue): TJsValue;
   function JsValueAsString(Value: TJsValue): WideString;
@@ -29,46 +30,30 @@ interface
   function BooleanAsJsBoolean(Value: Boolean): TJsValue;
   function JsBooleanAsBoolean(Value: TJsValue): Boolean;
 
-  procedure SetFunction(Instance: TJsValue; FunctionName: WideString; Callback: TJsFunctionFunc);
+  function GetValueType(Value: TJsValue): TJsValueType;
+
+  function CallFunction(Func: TJsValue; Args: PJsValue; ArgCount: Word): TJsValue;
+
+  function CreateObject: TJsValue;
+
+  function EvalScriptSource(SourceContext: UIntPtr; ScriptSource, ScriptName: WideString): TJsValue;
 
   function Undefined: TJsValue;
-  function CreateObject: TJsValue;
 
   function CreateArray(ItemCount: Integer): TJsValue;
   function GetArrayItem(ArrayValue: TJsValue; ItemIndex: Integer): TJsValue;
   procedure SetArrayItem(ArrayValue: TJsValue; ItemIndex: Integer; Value: TJsValue);
 
-  function GetValueType(Value: TJsValue): TJsValueType;
+  function JsTypeName(Value: TJsValueType): WideString;
 
 implementation
 
-  uses ChakraErr, chakracore_dll;
+  uses
+    ChakraAPI;
 
   function GetGlobalObject;
   begin
     TryChakraAPI('JsGetGlobalObject', JsGetGlobalObject(Result));
-  end;
-
-  function CreateExternalArrayBuffer;
-  begin
-
-    TryChakraAPI(
-      'JsCreateExternalArrayBuffer',
-
-      JsCreateExternalArrayBuffer(
-        //Pointer(PWideChar(Value)),
-        PWideChar(Value),
-        Length(Value) * SizeOf(WideChar),
-        Nil, Nil,
-        Result
-      )
-    );
-
-  end;
-
-  function JsValueAsJsString;
-  begin
-    TryChakraAPI('JsConvertValueToString', JsConvertValueToString(Value, Result));
   end;
 
   function GetObjectProperty(Instance, PropertyName: TJsValue): TJsValue;
@@ -89,6 +74,26 @@ implementation
   function GetIntProperty;
   begin
     Result := JsNumberAsInt(GetProperty(Instance, PropertyName));
+  end;
+
+  procedure SetObjectProperty(Instance, PropertyName, Value: TJsValue);
+  begin
+    TryChakraAPI('JsObjectSetProperty', JsObjectSetProperty(Instance, PropertyName, Value, False));
+  end;
+
+  procedure SetProperty;
+  begin
+    SetObjectProperty(Instance, StringAsJsString(PropertyName), Value);
+  end;
+
+  function JsValueAsJsString;
+  begin
+    TryChakraAPI('JsConvertValueToString', JsConvertValueToString(Value, Result));
+  end;
+
+  function JsValueAsString;
+  begin
+    Result := JsStringAsString(JsValueAsJsString(Value));
   end;
 
   function JsStringLength(Value: TJsValue): Integer;
@@ -125,14 +130,14 @@ implementation
     TryChakraAPI('JsCreateStringUtf16', JsCreateStringUtf16(P, Length(Value), Result));
   end;
 
-  function JsNumberAsInt;
-  begin
-    TryChakraAPI('JsNumberToInt', JsNumberToInt(Value, Result));
-  end;
-
   function IntAsJsNumber;
   begin
     TryChakraAPI('JsIntToNumber', JsIntToNumber(Value, Result));
+  end;
+
+  function JsNumberAsInt;
+  begin
+    TryChakraAPI('JsNumberToInt', JsNumberToInt(Value, Result));
   end;
 
   function BooleanAsJsBoolean;
@@ -148,19 +153,9 @@ implementation
     Result := B;
   end;
 
-  function EvalScriptSource;
-  var
-    Source, URL: TJsValue;
+  function GetValueType;
   begin
-    Source := CreateExternalArrayBuffer(ScriptSource);
-    URL := StringAsJsString(ScriptName);
-
-    TryChakraAPI('JsRun', JsRun(Source, SourceContext, URL, [psaUtf16Encoded], Result));
-  end;
-
-  function JsValueAsString;
-  begin
-    Result := JsStringAsString(JsValueAsJsString(Value));
+    TryChakraAPI('JsGetValueType', JsGetValueType(Value, Result));
   end;
 
   function FunctionCallback(Callee: TJsValue; IsConstructCall: ByteBool; Args: PJsValue; ArgCount: Word; Callback: Pointer): TJsValue; stdcall;
@@ -179,24 +174,9 @@ implementation
     TryChakraAPI('JsCreateNamedFunction', JsCreateNamedFunction(FunctionName, FunctionCallback, @Callback, Result));
   end;
 
-  function Undefined;
+  function CallFunction;
   begin
-    TryChakraAPI('JsGetUndefinedValue', JsGetUndefinedValue(Result));
-  end;
-
-  function CreateObject;
-  begin
-    TryChakraAPI('JsCreateObject', JsCreateObject(Result));
-  end;
-
-  procedure SetObjectProperty(Instance, PropertyName, Value: TJsValue);
-  begin
-    TryChakraAPI('JsObjectSetProperty', JsObjectSetProperty(Instance, PropertyName, Value, False));
-  end;
-
-  procedure SetProperty;
-  begin
-    SetObjectProperty(Instance, StringAsJsString(PropertyName), Value);
+    TryChakraAPI('JsCallFunction', JsCallFunction(Func, Args, ArgCount, Result));
   end;
 
   procedure SetFunction;
@@ -206,6 +186,62 @@ implementation
     Name := StringAsJsString(FunctionName);
     Fn := CreateNamedFunction(Name, Callback);
     SetObjectProperty(Instance, Name, Fn);
+  end;
+
+  function CreateObject;
+  begin
+    TryChakraAPI('JsCreateObject', JsCreateObject(Result));
+  end;
+
+  function CreateExternalArrayBuffer(Value: WideString): TJsValue;
+  begin
+
+    TryChakraAPI(
+      'JsCreateExternalArrayBuffer',
+
+      JsCreateExternalArrayBuffer(
+        //Pointer(PWideChar(Value)),
+        PWideChar(Value),
+        Length(Value) * SizeOf(WideChar),
+        Nil, Nil,
+        Result
+      )
+    );
+
+  end;
+
+  function EvalScriptSource;
+  var
+    Source, URL: TJsValue;
+  begin
+    Source := CreateExternalArrayBuffer(ScriptSource);
+    URL := StringAsJsString(ScriptName);
+
+    TryChakraAPI('JsRun', JsRun(Source, SourceContext, URL, [psaUtf16Encoded], Result));
+  end;
+
+  function Undefined;
+  begin
+    TryChakraAPI('JsGetUndefinedValue', JsGetUndefinedValue(Result));
+  end;
+
+  function JsTypeName;
+  begin
+    case Value of
+      JsUndefined: Result := 'Undefined';
+      JsNull: Result := 'Null';
+      JsNumber: Result := 'Number';
+      JsString: Result := 'String';
+      JsBoolean: Result := 'Boolean';
+      JsObject: Result := 'Object';
+      JsFunction: Result := 'Function';
+      JsError: Result := 'Error';
+      JsArray: Result := 'Array';
+      JsSymbol: Result := 'Symbol';
+      JsArrayBuffer: Result := 'ArrayBuffer';
+      JsTypedArray: Result := 'TypedArray';
+      JsDataView: Result := 'DataView';
+    end;
   end;
 
   function CreateArray;
@@ -221,11 +257,6 @@ implementation
   procedure SetArrayItem;
   begin
     TryChakraAPI('JsSetIndexedProperty', JsSetIndexedProperty(ArrayValue, IntAsJsNumber(ItemIndex), Value));
-  end;
-
-  function GetValueType;
-  begin
-    TryChakraAPI('JsGetValueType', JsGetValueType(Value, Result));
   end;
 
 end.
