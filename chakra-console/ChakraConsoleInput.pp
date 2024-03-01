@@ -12,7 +12,7 @@ interface
 implementation
 
   uses
-    Chakra, ChakraUtils, WinconConsoleInput, ChakraConsoleUtils;
+    Chakra, ChakraUtils, WinconConsoleInput, ChakraConsoleUtils, ChakraErr;
 
   function GetInputEventType: TJsValue;
   var
@@ -97,23 +97,54 @@ implementation
     end;
   end;
 
+  procedure SetControlKeys(KeyEvent: TJsValue; ControlKeys: TControlKeys);
+  begin
+    with ControlKeys do begin
+      SetProperty(KeyEvent, 'capsLock', BooleanAsJsBoolean(CapslockOn));
+      SetProperty(KeyEvent, 'enhancedKey', BooleanAsJsBoolean(EnhancedKey));
+      SetProperty(KeyEvent, 'leftAlt', BooleanAsJsBoolean(LeftAltPressed));
+      SetProperty(KeyEvent, 'leftCtrl', BooleanAsJsBoolean(LeftCtrlPressed));
+      SetProperty(KeyEvent, 'numLock', BooleanAsJsBoolean(NumLockOn));
+      SetProperty(KeyEvent, 'rightAlt', BooleanAsJsBoolean(RightAltPressed));
+      SetProperty(KeyEvent, 'rightCtrl', BooleanAsJsBoolean(RightCtrlPressed));
+      SetProperty(KeyEvent, 'scrollLock', BooleanAsJsBoolean(ScrollLockOn));
+
+      SetProperty(KeyEvent, 'shift', BooleanAsJsBoolean(ShiftPressed));
+      SetProperty(KeyEvent, 'alt', BooleanAsJsBoolean(LeftAltPressed or RightAltPressed));
+      SetProperty(KeyEvent, 'ctrl', BooleanAsJsBoolean(LeftCtrlPressed or RightCtrlPressed));
+    end;
+  end;
+
   function GetKeyType(KeyCode: Integer): String;
   begin
 
     Result := 'none';
 
     case KeyCode of
+      $20: Result := 'alphabetic';
       $09: Result := 'navigation';
       $08, $2E, $2D: Result := 'edition';
 
       else begin
 
-        if (KeyCode >= $21) and (KeyCode <= $28) then Result := 'navigation'; Exit;
-        if (KeyCode >= $41) and (KeyCode <= $5A) then Result := 'alphabetic'; Exit;
-        if (KeyCode >= $BB) and (KeyCode <= $BE) then Result := 'punctuation'; Exit;
-        if (KeyCode >= $30) and (KeyCode <= $39) then Result := 'numeric'; Exit;
-        if (KeyCode >= $70) and (KeyCode <= $87) then Result := 'function'; Exit;
-        if (KeyCode >= $AD) and (KeyCode <= $B3) then Result := 'media'; Exit;
+        if (KeyCode >= $21) and (KeyCode <= $28) then begin
+          Result := 'navigation'; Exit;
+        end;
+        if (KeyCode >= $41) and (KeyCode <= $5A) then begin
+          Result := 'alphabetic'; Exit;
+        end;
+        if (KeyCode >= $BB) and (KeyCode <= $BE) then begin
+          Result := 'punctuation'; Exit;
+        end;
+        if (KeyCode >= $30) and (KeyCode <= $39) then begin
+          Result := 'numeric'; Exit;
+        end;
+        if (KeyCode >= $70) and (KeyCode <= $87) then begin
+          Result := 'function'; Exit;
+        end;
+        if (KeyCode >= $AD) and (KeyCode <= $B3) then begin
+          Result := 'media'; Exit;
+        end;
 
       end;
     end;
@@ -136,6 +167,8 @@ implementation
             SetProperty(Result, 'keyType', StringAsJsString(GetKeyType(KeyCode)));
             SetProperty(Result, 'repetitions', IntAsJsNUmber(Repetitions));
             SetProperty(Result, 'name', StringAsJsString(GetKeyName(KeyCode)));
+
+            SetControlKeys(Result, ControlKeys);
           end;
 
         end;
@@ -158,6 +191,8 @@ implementation
             SetProperty(Result, 'keyCode', IntAsJsNumber(KeyCode));
             SetProperty(Result, 'character', StringAsJsString(UnicodeChar));
             SetProperty(Result, 'name', StringAsJsString(GetKeyName(KeyCode)));
+
+            SetControlKeys(Result, ControlKeys);
           end;
 
         end;
@@ -301,6 +336,8 @@ implementation
             case WheelDirection of
               mhwdRight: SetProperty(Result, 'direction', StringAsJsString('left'));
               mhwdLeft: SetProperty(Result, 'direction', StringAsJsString('right'));
+
+
             end;
           end;
         end;
@@ -321,12 +358,108 @@ implementation
     ConsoleInput.QuickEditModeEnabled := JsBooleanAsBoolean(Args^);
   end;
 
+  function IsEchoInputModeEnabled: TJsValue;
+  begin
+    Result := BooleanAsJsBoolean(ConsoleInput.EchoInputEnabled);
+  end;
+
+  function SetEchoInputMode(Args: PJsValue; ArgCount: Word): TJsValue;
+  begin
+    Result := Undefined;
+    CheckParams('setEchoInputMode', Args, ArgCount, [jsBoolean], 1);
+
+    ConsoleInput.EchoInputEnabled := JsBooleanAsBoolean(Args^);
+  end;
+
+  function IsInsertModeEnabled: TJsValue;
+  begin
+    Result := BooleanAsJsBoolean(ConsoleInput.InsertModeEnabled);
+  end;
+
+  function SetInsertMode(Args: PJsValue; ArgCount: Word): TJsValue;
+  begin
+    Result := Undefined;
+    CheckParams('setInsertMode', Args, ArgCount, [jsBoolean], 1);
+
+    ConsoleInput.InsertModeEnabled := JsBooleanAsBoolean(Args^);
+  end;
+
+  function IsLineInputModeEnabled: TJsValue;
+  begin
+    Result := BooleanAsJsBoolean(ConsoleInput.LineInputEnabled);
+  end;
+
+  function SetLineInputMode(Args: PJsValue; ArgCount: Word): TJsValue;
+  begin
+    Result := Undefined;
+    CheckParams('setLineInputMode', Args, ArgCount, [jsBoolean], 1);
+
+    ConsoleInput.LineInputEnabled := JsBooleanAsBoolean(Args^);
+  end;
+
+  function IsMouseInputModeEnabled: TJsValue;
+  begin
+    Result := BooleanAsJsBoolean(ConsoleInput.MouseInputEnabled);
+  end;
+
+  function SetMouseInputMode(Args: PJsValue; ArgCount: Word): TJsValue;
+  begin
+    Result := Undefined;
+    CheckParams('setMouseInputMode', Args, ArgCount, [jsBoolean], 1);
+
+    ConsoleInput.MouseInputEnabled := JsBooleanAsBoolean(Args^);
+  end;
+
+  function IsProcessedInputModeEnabled: TJsValue;
+  begin
+    Result := BooleanAsJsBoolean(ConsoleInput.ProcessedInputEnabled);
+  end;
+
+  function SetProcessedInputMode(Args: PJsValue; ArgCount: Word): TJsValue;
+  begin
+    Result := Undefined;
+    CheckParams('setProcessedInputMode', Args, ArgCount, [jsBoolean], 1);
+
+    ConsoleInput.ProcessedInputEnabled := JsBooleanAsBoolean(Args^);
+  end;
+
+  function IsWindowInputModeEnabled: TJsValue;
+  begin
+    Result := BooleanAsJsBoolean(ConsoleInput.WindowInputEnabled);
+  end;
+
+  function SetWindowInputMode(Args: PJsValue; ArgCount: Word): TJsValue;
+  begin
+    Result := Undefined;
+    CheckParams('setWindowInputMode', Args, ArgCount, [jsBoolean], 1);
+
+    ConsoleInput.WindowInputEnabled := JsBooleanAsBoolean(Args^);
+  end;
+
   function GetChakraConsoleInput;
   begin
     Result := CreateObject;
 
     SetFunction(Result, 'isQuickEditModeEnabled', @IsQuickEditModeEnabled);
     SetFunction(Result, 'setQuickEditMode', @SetQuickEditMode);
+
+    SetFunction(Result, 'isEchoInputEnabled', @IsEchoInputModeEnabled);
+    SetFunction(Result, 'setEchoInputMode', @SetEchoInputMode);
+
+    SetFunction(Result, 'isInsertModeEnabled', @IsInsertModeEnabled);
+    SetFunction(Result, 'setInsertMode', @SetInsertMode);
+
+    SetFunction(Result, 'isLineInputEnabled', @IsLineInputModeEnabled);
+    SetFunction(Result, 'setLineInputMode', @SetLineInputMode);
+
+    SetFunction(Result, 'isMouseInputEnabled', @IsMouseInputModeEnabled);
+    SetFunction(Result, 'setMouseInputMode', @SetMouseInputMode);
+
+    SetFunction(Result, 'isProcessedInputEnabled', @IsProcessedInputModeEnabled);
+    SetFunction(Result, 'setProcessedInputMode', @SetProcessedInputMode);
+
+    SetFunction(Result, 'isWindowInputEnabled', @IsWindowInputModeEnabled);
+    SetFunction(Result, 'setWindowInputMode', @SetWindowInputMode);
 
     SetFunction(Result, 'getInputEventType', @GetInputEventType);
     SetFunction(Result, 'discardInputEvent', @DiscardInputEvent);

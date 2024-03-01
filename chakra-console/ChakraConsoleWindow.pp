@@ -12,7 +12,7 @@ interface
 implementation
 
   uses
-    Chakra, ChakraUtils, WinconConsoleWindow, Windows;
+    Chakra, ChakraUtils, WinconConsoleWindow, Windows, ChakraErr;
 
   function GetTitle(Args: PJsValue; ArgCount: Word): TJsValue;
   begin
@@ -74,7 +74,7 @@ implementation
     ConsoleWindow.QuickEditEnabled := Enabled;
   end;
 
-  function GetRuntimeOsConsoleWindow: TJsValue;
+  function GetChakraConsoleWindow: TJsValue;
   begin
     Result := CreateObject;
 
@@ -92,12 +92,6 @@ implementation
 
     SetFunction(Result, 'getQuickEditState', GetQuickEditState);
     SetFunction(Result, 'setQuickEditState', SetQuickEditState);
-  end;
-
-
-  function GetChakraConsoleWindow;
-  begin
-    Result := CreateObject;
   end;
 
 end.

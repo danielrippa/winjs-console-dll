@@ -12,7 +12,7 @@ interface
 implementation
 
   uses
-    Chakra, ChakraUtils, Windows, WinconScreenBuffer, WinconTypes, WinconUtils, ChakraConsoleUtils;
+    Chakra, ChakraUtils, Windows, WinconScreenBuffer, WinconTypes, WinconUtils, ChakraConsoleUtils, ChakraErr;
 
   var Buffer: TScreenBuffer;
 
@@ -72,11 +72,57 @@ implementation
   end;
 
   function GetVisibleArea(Args: PJsValue; ArgCount: Word): TJsValue;
+  var
+    Location, Size: TJsValue;
   begin
+    SetBuffer(Args);
+
+    Result := CreateObject;
+
+    with Buffer.VisibleArea.Location do begin
+
+      Location := CreateObject;
+
+      SetProperty(Location, 'row', IntAsJsNumber(Row));
+      SetProperty(Location, 'column', IntAsJsNumber(Column));
+
+    end;
+
+    with Buffer.VisibleArea.Size do begin
+
+      Size := CreateObject;
+
+      SetProperty(Size, 'rows', IntAsJsNumber(Height));
+      SetProperty(Size, 'columns', IntAsJsNumber(Width));
+
+    end;
+
+    SetProperty(Result, 'location', Location);
+    SetProperty(Result, 'size', Size);
+
   end;
 
   function SetVisibleArea(Args: PJsValue; ArgCount: Word): TJsValue;
+  var
+    Area: TScreenArea;
   begin
+    Result := Undefined;
+
+    SetBuffer(Args);
+    CheckParams('setVisibleArea', Args, ArgCount, [jsNumber, jsNumber, jsNumber, jsNumber, jsNumber], 5); Inc(Args);
+
+    with Area.Location do begin
+      Row := JsNumberAsInt(Args^); Inc(Args);
+      Column := JsNumberAsInt(Args^); Inc(Args);
+    end;
+
+    with Area.Size do begin
+      Height := JsNumberAsInt(Args^); Inc(Args);
+      Width := JsNumberAsInt(Args^); Inc(Args);
+    end;
+
+    Buffer.VisibleArea := Area;
+
   end;
 
   function GetStdoutHandle: TJsValue;
@@ -154,6 +200,7 @@ implementation
 
   function SetVirtualTerminalProcessingState(Args: PJsValue; ArgCount: Word): TJsValue;
   begin
+    Result := Undefined;
     SetBuffer(Args);
 
     CheckParams('setVirtualTerminalProcessingState', Args, ArgCount, [jsNumber, jsBoolean], 2); Inc(Args);
